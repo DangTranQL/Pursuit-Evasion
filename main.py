@@ -1,96 +1,88 @@
-import pygame
-import random
+import numpy as np
 import math
+import matplotlib.pyplot as plt
+from maze import Maze
+from agent import Agent
+from qlearning import QLearning
+from evader import choose_evader_action
+from reward import Reward
 
-# Initialize Pygame
-pygame.init()
+# Function to play the game using Q-learning with visualization
+def play_game_with_qlearning_visualize(maze, pursuer, evader, q_learning, pursuer2, q_learning2, max_steps=300):
+    visited = []
+    repeating = []
+    visited2 = []
+    repeating2 = []
+    plt.figure(figsize=(6, 6))
+    for step in range(max_steps):
+        if pursuer.position == evader.position or pursuer2.position == evader.position:
+            plt.scatter(pursuer.position[1], pursuer.position[0], color='blue', marker='o', s=100, label='Pursuer')
+            plt.scatter(pursuer2.position[1], pursuer2.position[0], color='green', marker='o', s=100, label='Pursuer2')
+            plt.scatter(evader.position[1], evader.position[0], color='red', marker='x', s=100, label='Evader')
 
-# Constants
-WIDTH, HEIGHT = 800, 600
-PLAYER_SIZE = 10
-ENEMY_SIZE = 10
-PLAYER_SPEED = 5
-ENEMY_SPEED = 3
-WHITE = (255, 255, 255)
-RED = (255, 0, 0)
-BLUE = (0, 0, 255)
-
-# Create the window
-window = pygame.display.set_mode((WIDTH, HEIGHT))
-pygame.display.set_caption("Pursuit Evasion Game")
-
-# Clock to control the frame rate
-clock = pygame.time.Clock()
-
-# Define the player and enemy positions
-player_x, player_y = WIDTH // 2, HEIGHT // 2
-enemy_x, enemy_y = random.randint(0, WIDTH), random.randint(0, HEIGHT)
-
-# Game loop
-running = True
-while running:
-    window.fill(WHITE)
-
-    # Handle events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-
-    # Calculate the distance between player and enemy
-    distance = math.sqrt((player_x - enemy_x) ** 2 + (player_y - enemy_y) ** 2)
-
-    # Evasive movement for the player
-    if distance < 150:  # If the enemy is within a certain distance
-        dx = player_x - enemy_x
-        dy = player_y - enemy_y
-        angle = math.atan2(dy, dx)
-
-        # Calculate the direction away from the pursuer
-        evade_angle = angle  # Angle 180 degrees opposite from the pursuer
-
-        # Calculate the new position
-        new_player_x = player_x + PLAYER_SPEED * math.cos(evade_angle)
-        new_player_y = player_y + PLAYER_SPEED * math.sin(evade_angle)
-
-        # Boundary check for the player's new position
-        if 0 <= new_player_x <= WIDTH - PLAYER_SIZE and 0 <= new_player_y <= HEIGHT - PLAYER_SIZE:
-            player_x = new_player_x
-            player_y = new_player_y
+            # Plot legend and display
+            plt.draw()
+            plt.pause(0.3)  # Pause to visualize each step
+            print("Caught the evader!")
+            print("Step: ", step)
+            break
         else:
-            # If hitting the border, change direction randomly
-            new_evade_angle = random.uniform(0, math.pi)
-            player_x += PLAYER_SPEED * math.cos(new_evade_angle)
-            player_y += PLAYER_SPEED * math.sin(new_evade_angle)
+            plt.clf()
+            plt.title(f"Step: {step + 1}")
+            plt.xlim(-1, maze.width)
+            plt.ylim(-1, maze.height)
 
-    # Enemy movement (pursuit)
-    if enemy_x < player_x:
-        enemy_x += ENEMY_SPEED
-    elif enemy_x > player_x:
-        enemy_x -= ENEMY_SPEED
+            # Plot walls
+            for wall in maze.walls:
+                plt.fill_between([wall[1], wall[1] + 1], wall[0], wall[0] + 1, color='gray')
 
-    if enemy_y < player_y:
-        enemy_y += ENEMY_SPEED
-    elif enemy_y > player_y:
-        enemy_y -= ENEMY_SPEED
+            # Plot pursuer and evader
+            plt.scatter(pursuer.position[1], pursuer.position[0], color='blue', marker='o', s=100, label='Pursuer')
+            plt.scatter(evader.position[1], evader.position[0], color='red', marker='x', s=100, label='Evader')
+            plt.scatter(pursuer2.position[1], pursuer2.position[0], color='green', marker='o', s=100, label='Pursuer2')
 
-    # Boundary check for the enemy's position
-    enemy_x = max(0, min(enemy_x, WIDTH - ENEMY_SIZE))
-    enemy_y = max(0, min(enemy_y, HEIGHT - ENEMY_SIZE))
+            # Plot legend and display
+            plt.legend()
+            plt.draw()
+            plt.pause(0.3)  # Pause to visualize each step
 
-    # Draw player and enemy
-    pygame.draw.rect(window, RED, (player_x, player_y, PLAYER_SIZE, PLAYER_SIZE))
-    pygame.draw.rect(window, BLUE, (enemy_x, enemy_y, ENEMY_SIZE, ENEMY_SIZE))
+            pursuer_state = pursuer.position
+            # evader_state = evader.position
+            pursuer2_state = pursuer2.position
 
-    # Collision detection
-    player_rect = pygame.Rect(player_x, player_y, PLAYER_SIZE, PLAYER_SIZE)
-    enemy_rect = pygame.Rect(enemy_x, enemy_y, ENEMY_SIZE, ENEMY_SIZE)
-    if player_rect.colliderect(enemy_rect):
-        running = False
-        print("Game Over! You were caught by the enemy.")
+            # Choose the direction with the maximum distance from the pursuer
+            evader_action = choose_evader_action(pursuer.position, evader)
+            evader.move(evader_action)
 
-    # Update the display
-    pygame.display.update()
-    clock.tick(60)
+            # Pursuer moves based on Q-learning
+            pursuer_action = q_learning.choose_action(pursuer_state)
+            pursuer.move(pursuer_action)
+            pursuer2_action = q_learning.choose_action(pursuer2_state)
+            pursuer2.move(pursuer2_action)
 
-# Quit Pygame
-pygame.quit()
+            # Reward for the pursuer
+            reward = Reward(pursuer, pursuer2, evader, maze, visited, repeating)
+
+            # Update Q-values
+            q_learning.update_q_value(pursuer_state, pursuer_action, reward, pursuer.position)
+            
+            # Reward for the pursuer
+            reward2 = Reward(pursuer2, pursuer, evader, maze, visited2, repeating2)
+
+            # Update Q-values
+            q_learning2.update_q_value(pursuer2_state, pursuer2_action, reward2, pursuer2.position)
+
+# Initialize the maze and agents
+maze = Maze(width=7, height=7)
+pursuer = Agent(maze, position=(0, 0))
+pursuer2 = Agent(maze, position=(3,6))
+evader = Agent(maze, position=(4, 4))
+
+# Initialize Q-learning for the pursuer
+num_actions = 4  # Up, Down, Left, Right
+q_learning = QLearning(num_actions, 0.005, 0.9, 0)
+q_learning2 = QLearning(num_actions, 0.005, 0.9, 0)
+
+# Play the game using Q-learning with visualization
+play_game_with_qlearning_visualize(maze, pursuer, evader, q_learning, pursuer2, q_learning2)
+plt.show()
