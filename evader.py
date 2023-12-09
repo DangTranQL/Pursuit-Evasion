@@ -16,3 +16,4 @@ def choose_evader_action(pursuer_position, evader):
     # Choose the direction with the maximum future distance from the pursuer
     evader_action = np.argmax(future_distances)
     return evader_action
+

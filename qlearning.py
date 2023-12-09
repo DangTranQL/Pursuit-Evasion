@@ -13,7 +13,7 @@ class QLearning:
         if state not in self.q_table:
             self.q_table[state] = [0] * self.num_actions
         return self.q_table[state][action]
-    
+
     def choose_action(self, state):
         if state not in self.q_table:
             action = np.random.choice(range(self.num_actions))

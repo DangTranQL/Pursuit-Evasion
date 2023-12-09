@@ -1,4 +1,4 @@
-from maze import Maze
+import random
 
 # Define the pursuer and evader
 class Agent:
@@ -18,7 +18,15 @@ class Agent:
         else:
             raise ValueError("Invalid action")
 
-        if (0 <= new_position[0] < self.maze.height and
-                0 <= new_position[1] < self.maze.width and
+        if (0 <= new_position[0] <= self.maze.height and
+                0 <= new_position[1] <= self.maze.width and
                 not self.maze.is_wall(new_position)):
             self.position = new_position
+            
+    def reset(self):
+        while True:
+            x = random.randint(0, self.maze.width)
+            y = random.randint(0, self.maze.height)
+            position = (x, y)
+            if not self.maze.is_wall(position):
+                return position
