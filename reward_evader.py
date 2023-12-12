@@ -12,5 +12,5 @@ def Reward_Avoid(pursuer, pursuer2, evader, maze):
             if dist > 1 and dist2 > 1:
                 reward = 1 + max(dist, dist2)
             else:
-                reward = -10
+                reward = -50
     return reward

@@ -8,8 +8,8 @@ def Reward(pursuer, pursuer2, evader, maze, visited, repeating):
     else:
         if maze.is_wall(pursuer.position):
             reward = -100
-        elif sep <= 6:
-            reward = -30
+        elif sep <= 3:
+            reward = -50
         else:
             if not (pursuer.position in visited):
                 visited.append(pursuer.position)

@@ -29,4 +29,5 @@ class Agent:
             y = random.randint(0, self.maze.height)
             position = (x, y)
             if not self.maze.is_wall(position):
-                return position
+                self.position = position
+                break

@@ -2,6 +2,7 @@ from visualize import train_agent
 from maze import Maze
 from agent import Agent
 from qlearning import QLearning
+import matplotlib.pyplot as plt
 from joblib import dump
 
 # Initialize the maze and agents
@@ -17,12 +18,27 @@ q_learning2 = QLearning(num_actions, 0.001, 0.9, 0)
 q_learning_avoid = QLearning(num_actions, 0.001, 0.9, 0)
 
 def train(maze, pursuer, pursuer2, evader, q_learning,q_learning2, q_learning_avoid, epochs = 250):
+    data_x = []
+    data_y = []
     for epoch in range(epochs):
         pursuer.reset()
         pursuer2.reset()
         evader.reset()
-        train_agent(maze, pursuer, pursuer2, evader, q_learning,q_learning2, q_learning_avoid)
+        step = train_agent(maze, pursuer, pursuer2, evader, q_learning,q_learning2, q_learning_avoid)
+        if step != None:
+            data_x.append(epoch)
+            data_y.append(step)
         print("Epoch: ", epoch)
+
+    # Plotting the data
+    plt.figure(figsize=(6, 6))
+    plt.plot(data_x, data_y, linestyle='-', color='b') 
+    plt.title('Epochs vs Steps')
+    plt.xlabel('Epochs')
+    plt.ylabel('Steps')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.show()
     
 train(maze, pursuer, pursuer2, evader, q_learning,q_learning2, q_learning_avoid)
 
