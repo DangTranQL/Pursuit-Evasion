@@ -28,7 +28,7 @@ def train(maze, pursuer, pursuer2, evader, q_learning,q_learning2, q_learning_av
         if step != None:
             data_x.append(epoch)
             data_y.append(step)
-        print("Epoch: ", epoch)
+        print("Epoch: ", epoch, "Steps: ", step)
 
     # Plotting the data
     plt.figure(figsize=(6, 6))
